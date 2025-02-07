@@ -57,7 +57,6 @@ def train_gan(
             fake = torch.zeros(real_img.size(0), 1).to(device)
 
             # Train generator
-            # Train generator
             optimizer_g.zero_grad()
             z = torch.randn(real_img.size(0), 100, 1, 1).to(device)
             gen_img = generator(z)
@@ -68,6 +67,9 @@ def train_gan(
             # Train discriminator
             optimizer_d.zero_grad()
             real_loss = adversarial_loss(discriminator(real_img), valid)
+            # Generate new fake images for discriminator
+            z = torch.randn(real_img.size(0), 100, 1, 1).to(device)
+            gen_img = generator(z)
             fake_loss = adversarial_loss(discriminator(gen_img.detach()), fake)
             d_loss = (real_loss + fake_loss) / 2
             d_loss.backward()

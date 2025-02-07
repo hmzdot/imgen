@@ -22,3 +22,7 @@ uv run src/train.py
 # Takes generator network's weights as the input
 uv run src/eval.py snapshosts/gw_{timestamp}.pth
 ```
+
+## TODO
+
+- [ ] Use Wasserstein distance
