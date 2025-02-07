@@ -24,6 +24,15 @@ cifar_10 = datasets.CIFAR10(
 loader = DataLoader(cifar_10, batch_size=64, shuffle=True)
 
 
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find("Conv") != -1:
+        nn.init.normal_(m.weight.data, 0.0, 0.02)
+    elif classname.find("BatchNorm") != -1:
+        nn.init.normal_(m.weight.data, 1.0, 0.02)
+        nn.init.constant_(m.bias.data, 0)
+
+
 def get_device() -> torch.device:
     if torch.cuda.is_available():
         return torch.device("cuda")
@@ -44,6 +53,10 @@ def train_gan(
     device = get_device()
     generator.to(device)
     discriminator.to(device)
+
+    # Initialize weights
+    generator.apply(weights_init)
+    discriminator.apply(weights_init)
 
     adversarial_loss = nn.BCELoss()
     optimizer_g = optim.Adam(generator.parameters(), lr=lr, betas=betas)
@@ -81,7 +94,7 @@ def train_gan(
 
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     torch.save(generator.state_dict(), f"./snapshots/gw_{timestamp}.pth")
-    torch.save(discriminator.state_dict(), f"./snapshots/dw_weights_{timestamp}.pth")
+    torch.save(discriminator.state_dict(), f"./snapshots/dw_{timestamp}.pth")
 
 
 if __name__ == "__main__":
