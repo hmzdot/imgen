@@ -2,12 +2,14 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 import logging
+import itertools
 from tqdm import tqdm
 from datetime import datetime
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from model import Generator, Critic
 from torch.utils.tensorboard import SummaryWriter
+from typing import Union, Literal
 
 logging.basicConfig(
     level=logging.INFO,
@@ -59,14 +61,21 @@ def generator_loss(D, fake_samples):
     return loss
 
 
-def train(G, D, loader, epochs=100, n_critic=5, lr=0.00005):
+def train(
+    G,
+    D,
+    loader,
+    epochs: Union[int, Literal["inf"]] = 100,
+    n_critic=5,
+    lr=0.00005,
+):
     """
     Trains a GAN model.
     # Parameters
     - G: Generator model
     - D: Discriminator model
     - loader: DataLoader for the dataset
-    - epochs: Number of epochs to train for
+    - epochs: Number of epochs to train for, or "inf" to run indefinitely
     - n_critic: Number of critic updates per generator update
     - lr: Learning rate
     """
@@ -85,8 +94,13 @@ def train(G, D, loader, epochs=100, n_critic=5, lr=0.00005):
     optimizer_G = optim.RMSprop(G.parameters(), lr=lr)
     optimizer_D = optim.RMSprop(D.parameters(), lr=lr)
 
+    if epochs == "inf":
+        epochs_range = itertools.count()
+    else:
+        epochs_range = range(epochs)
+
     writer_step = 0
-    for epoch in range(epochs):
+    for epoch in epochs_range:
         for real_img, _ in tqdm(loader, desc=f"Epoch #{epoch + 1}"):
             # Move real_img to the same device
             real_img = real_img.to(device)
