@@ -16,3 +16,6 @@ snapshots/*
 # data
 data/*
 !data/.gitkeep
+
+# tensorboard
+runs/*

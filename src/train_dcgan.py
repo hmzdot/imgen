@@ -8,7 +8,10 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from model import Generator, Discriminator
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 
 cifar_10 = datasets.CIFAR10(
     root="./data",
@@ -42,25 +45,35 @@ def get_device() -> torch.device:
         return torch.device("cpu")
 
 
-def train_gan(
-    generator,
-    discriminator,
+def train(
+    G,
+    D,
     loader,
     epochs=100,
     lr=0.0002,
     betas=(0.5, 0.999),
 ):
+    """
+    Trains a GAN model.
+    # Parameters
+    - G: Generator model
+    - D: Discriminator model
+    - loader: DataLoader for the dataset
+    - epochs: Number of epochs to train for
+    - n_critic: Number of critic updates per generator update
+    - lr: Learning rate
+    """
     device = get_device()
-    generator.to(device)
-    discriminator.to(device)
+    G.to(device)
+    D.to(device)
 
     # Initialize weights
-    generator.apply(weights_init)
-    discriminator.apply(weights_init)
+    G.apply(weights_init)
+    D.apply(weights_init)
 
     adversarial_loss = nn.BCELoss()
-    optimizer_g = optim.Adam(generator.parameters(), lr=lr, betas=betas)
-    optimizer_d = optim.Adam(discriminator.parameters(), lr=lr, betas=betas)
+    optimizer_G = optim.Adam(G.parameters(), lr=lr, betas=betas)
+    optimizer_D = optim.Adam(D.parameters(), lr=lr, betas=betas)
 
     for epoch in range(epochs):
         for real_img, _ in tqdm(loader, desc=f"Epoch #{epoch + 1}"):
@@ -70,32 +83,32 @@ def train_gan(
             fake = torch.zeros(real_img.size(0), 1).to(device)
 
             # Train generator
-            optimizer_g.zero_grad()
+            optimizer_G.zero_grad()
             z = torch.randn(real_img.size(0), 100, 1, 1).to(device)
-            gen_img = generator(z)
-            g_loss = adversarial_loss(discriminator(gen_img), valid)
+            gen_img = G(z)
+            g_loss = adversarial_loss(D(gen_img), valid)
             g_loss.backward()
-            optimizer_g.step()
+            optimizer_G.step()
 
             # Train discriminator
-            optimizer_d.zero_grad()
-            real_loss = adversarial_loss(discriminator(real_img), valid)
+            optimizer_D.zero_grad()
+            real_loss = adversarial_loss(D(real_img), valid)
             # Generate new fake images for discriminator
             z = torch.randn(real_img.size(0), 100, 1, 1).to(device)
-            gen_img = generator(z)
-            fake_loss = adversarial_loss(discriminator(gen_img.detach()), fake)
+            gen_img = G(z)
+            fake_loss = adversarial_loss(D(gen_img.detach()), fake)
             d_loss = (real_loss + fake_loss) / 2
             d_loss.backward()
-            optimizer_d.step()
+            optimizer_D.step()
 
         logging.info(
             f"Epoch #{epoch + 1}, D loss: {d_loss.item():.4f}, G loss: {g_loss.item():.4f}"
         )
 
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    torch.save(generator.state_dict(), f"./snapshots/gw_{timestamp}.pth")
-    torch.save(discriminator.state_dict(), f"./snapshots/dw_{timestamp}.pth")
+    torch.save(G.state_dict(), f"./snapshots/gw_{timestamp}.pth")
+    torch.save(D.state_dict(), f"./snapshots/dw_{timestamp}.pth")
 
 
 if __name__ == "__main__":
-    train_gan(Generator(), Discriminator(), loader)
+    train(Generator(), Discriminator(), loader)
