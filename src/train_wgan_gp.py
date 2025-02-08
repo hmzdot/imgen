@@ -139,7 +139,7 @@ def train(
                 loss_D.backward()
 
                 # Optionally, clip gradients to prevent explosion
-                # torch.nn.utils.clip_grad_norm_(D.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(D.parameters(), max_norm=1.0)
 
                 optimizer_D.step()
 
