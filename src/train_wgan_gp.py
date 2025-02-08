@@ -49,9 +49,8 @@ def gradient_penalty(D, real_samples, fake_samples, device, factor):
     # Linearly interpolate distribution with:
     # x_interpolated = alpha * x_real + (1-alpha) * x_gen
     alpha = torch.rand(flat_shape, device=device)
-    interpolates = (alpha * real_samples + (1 - alpha) * fake_samples).requires_grad(
-        True
-    )
+    interpolates = alpha * real_samples + ((1 - alpha) * fake_samples)
+    interpolates.requires_grad_(True)
     d_interpolates = D(interpolates)
 
     # Take gradient of D's output wrt. interpolates
