@@ -93,7 +93,7 @@ def train(
     loader,
     epochs: Union[int, Literal["inf"]] = 100,
     n_critic=5,
-    lr=0.00005,
+    lr=0.0001,
     betas=(0.0, 0.9),
 ):
     """
