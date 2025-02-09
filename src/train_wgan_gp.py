@@ -88,8 +88,8 @@ def train(
     loader,
     epochs: Union[int, Literal["inf"]] = 100,
     n_critic=5,
-    lr=0.0001,
-    betas=(0.0, 0.9),
+    lr=0.0002,
+    betas=(0.5, 0.999),
     factor=10,
 ):
     """
@@ -186,10 +186,7 @@ def train(
 
 if __name__ == "__main__":
     train(
-        Generator(),
-        Critic(),
+        Generator(img_channels=3, img_size=32),
+        Critic(img_channels=3, img_size=32),
         loader,
-        lr=0.0002,
-        betas=(0.5, 0.99),
-        factor=10,
     )

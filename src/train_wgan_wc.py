@@ -160,4 +160,8 @@ def train(
 
 
 if __name__ == "__main__":
-    train(Generator(), Critic(), loader)
+    train(
+        Generator(img_channels=3, img_size=32),
+        Critic(img_channels=3, img_size=32),
+        loader,
+    )
