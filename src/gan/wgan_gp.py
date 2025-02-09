@@ -107,22 +107,21 @@ def train(
             writer.add_scalar("Loss/Generator", loss_G.item(), writer_step)
             writer_step += 1
 
-        if epoch % 10 == 0:  # Log images every 10 epochs
-            # Log sample images
-            with torch.no_grad():
-                sample_z = torch.randn(8, 100, 1, 1, device=device)
-                sample_images = G(sample_z)
-                # Rescale images from [-1, 1] to [0, 1]
-                sample_images = (sample_images + 1) / 2
-                writer.add_images("Generated Images", sample_images, epoch)
+        # Log sample images each epoch
+        with torch.no_grad():
+            sample_z = torch.randn(8, 100, 1, 1, device=device)
+            sample_images = G(sample_z)
+            # Rescale images from [-1, 1] to [0, 1]
+            sample_images = (sample_images + 1) / 2
+            writer.add_images("Generated Images", sample_images, epoch)
 
-            # Save models
-            torch.save(G.state_dict(), f"./snapshots/gw_{timestamp}.pth")
-            torch.save(D.state_dict(), f"./snapshots/dw_{timestamp}.pth")
+        # Save models
+        torch.save(G.state_dict(), f"./snapshots/gw_{timestamp}.pth")
+        torch.save(D.state_dict(), f"./snapshots/dw_{timestamp}.pth")
 
-            logging.info(
-                f"Saved models to snapshots/gw_{timestamp}.pth and snapshots/dw_{timestamp}.pth"
-            )
+        logging.info(
+            f"Saved models to snapshots/gw_{timestamp}.pth and snapshots/dw_{timestamp}.pth"
+        )
 
         logging.info(
             f"Epoch #{epoch + 1}, D loss: {loss_D.item():.4f}, G loss: {loss_G.item():.4f}"
