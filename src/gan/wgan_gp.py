@@ -4,72 +4,18 @@ import logging
 import itertools
 from tqdm import tqdm
 from datetime import datetime
-from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from ..model import Generator, Critic
 from torch.utils.tensorboard import SummaryWriter
 from typing import Union, Literal
+
+from .model import Generator, Critic
+from .datasets import CIFAR_10
+from .lipschitz import gradient_penalty
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
-
-cifar_10 = datasets.CIFAR10(
-    root="./data",
-    train=True,
-    download=True,
-    transform=transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ]
-    ),
-)
-loader = DataLoader(cifar_10, batch_size=64, shuffle=True)
-
-
-def get_device() -> torch.device:
-    if torch.cuda.is_available():
-        return torch.device("cuda")
-    elif torch.backends.mps.is_available():
-        return torch.device("mps")
-    else:
-        return torch.device("cpu")
-
-
-def gradient_penalty(D, real_samples, fake_samples, device, factor):
-    real_samples = real_samples.float()
-    fake_samples = fake_samples.float()
-
-    # Get the batch size and shape information
-    batch_size = real_samples.size(0)
-    # Create alpha with the correct shape for broadcasting
-
-    # Linearly interpolate distribution with:
-    # x_interpolated = alpha * x_real + (1-alpha) * x_gen
-    alpha = torch.rand((batch_size, 1, 1, 1), device=device)
-    interpolates = alpha * real_samples + ((1 - alpha) * fake_samples)
-    interpolates.requires_grad_(True)
-    d_interpolates = D(interpolates)
-
-    # Take gradient of D's output wrt. interpolates
-    gradients = torch.autograd.grad(
-        outputs=d_interpolates,
-        inputs=interpolates,
-        grad_outputs=torch.ones_like(d_interpolates),
-        create_graph=True,
-        retain_graph=True,
-        only_inputs=True,
-    )[0]
-    gradients = gradients.view(gradients.size(0), -1)
-
-    # Calculate E[ (L2Norm(grad) - 1)^2 ]
-    # L2 Norm can be calculated with Tensor::norm
-    # Expected value (E) can be calculated with Tensor::mean
-    gradient_norms = gradients.norm(2, dim=1).clamp(min=1e-6)
-    gradient_penalty = ((gradient_norms - 1) ** 2).mean()
-    return factor * gradient_penalty
 
 
 def critic_loss(D, real_samples, fake_samples, device, factor=10):
@@ -95,6 +41,7 @@ def train(
     lr=0.00005,
     betas=(0.5, 0.999),
     factor=10,
+    device="cpu",
 ):
     """
     Trains a GAN model.
@@ -110,7 +57,7 @@ def train(
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     writer = SummaryWriter(f"runs/wgan_wc_{timestamp}")
 
-    device = get_device()
+    device = torch.device(device)
     G.to(device)
     D.to(device)
 
@@ -186,8 +133,11 @@ def train(
 
 
 if __name__ == "__main__":
+    loader = DataLoader(CIFAR_10, batch_size=64, shuffle=True)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     train(
         Generator(img_channels=3, img_size=32),
         Critic(img_channels=3, img_size=32),
         loader,
+        device=device,
     )

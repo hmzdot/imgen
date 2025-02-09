@@ -5,29 +5,18 @@ import logging
 import itertools
 from tqdm import tqdm
 from datetime import datetime
-from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from ..model import Generator, Critic
 from torch.utils.tensorboard import SummaryWriter
 from typing import Union, Literal
+
+from .model import Generator, Critic
+from .datasets import CIFAR_10
+from .lipschitz import weight_clipping
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
-
-cifar_10 = datasets.CIFAR10(
-    root="./data",
-    train=True,
-    download=True,
-    transform=transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ]
-    ),
-)
-loader = DataLoader(cifar_10, batch_size=64, shuffle=True)
 
 
 def weights_init(m):
@@ -37,15 +26,6 @@ def weights_init(m):
     elif classname.find("BatchNorm") != -1:
         nn.init.normal_(m.weight.data, 1.0, 0.02)
         nn.init.constant_(m.bias.data, 0)
-
-
-def get_device() -> torch.device:
-    if torch.cuda.is_available():
-        return torch.device("cuda")
-    elif torch.backends.mps.is_available():
-        return torch.device("mps")
-    else:
-        return torch.device("cpu")
 
 
 def critic_loss(D, real_samples, fake_samples):
@@ -68,6 +48,7 @@ def train(
     epochs: Union[int, Literal["inf"]] = 100,
     n_critic=5,
     lr=0.00005,
+    device="cpu",
 ):
     """
     Trains a GAN model.
@@ -83,7 +64,7 @@ def train(
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     writer = SummaryWriter(f"runs/wgan_wc_{timestamp}")
 
-    device = get_device()
+    device = torch.device(device)
     G.to(device)
     D.to(device)
 
@@ -118,8 +99,7 @@ def train(
                 optimizer_D.step()
 
                 # Clip weights to enforce Lipschitz constraint
-                for p in D.parameters():
-                    p.data.clamp_(-0.01, 0.01)
+                weight_clipping(D)
 
             # Train generator
             optimizer_G.zero_grad()
@@ -160,8 +140,11 @@ def train(
 
 
 if __name__ == "__main__":
+    loader = DataLoader(CIFAR_10, batch_size=64, shuffle=True)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     train(
         Generator(img_channels=3, img_size=32),
         Critic(img_channels=3, img_size=32),
         loader,
+        device=device,
     )
