@@ -42,13 +42,9 @@ def gradient_penalty(D, real_samples, fake_samples, device, factor):
     real_samples = real_samples.float()
     fake_samples = fake_samples.float()
 
-    # Calculate the flat shape
-    batch_size = real_samples.size(0)
-    flat_shape = [batch_size, *[1] * (real_samples.dim() - 1)]
-
     # Linearly interpolate distribution with:
     # x_interpolated = alpha * x_real + (1-alpha) * x_gen
-    alpha = torch.rand(flat_shape, device=device)
+    alpha = torch.rand(real_samples.size(0), 1, 1, 1, device=device)
     interpolates = alpha * real_samples + ((1 - alpha) * fake_samples)
     interpolates.requires_grad_(True)
     d_interpolates = D(interpolates)
@@ -62,7 +58,7 @@ def gradient_penalty(D, real_samples, fake_samples, device, factor):
         retain_graph=True,
         only_inputs=True,
     )[0]
-    gradients = gradients.view(batch_size, -1)
+    gradients = gradients.view(gradients.size(0), -1)
 
     # Calculate E[ (L2Norm(grad) - 1)^2 ]
     # L2 Norm can be calculated with Tensor::norm
@@ -94,6 +90,7 @@ def train(
     n_critic=5,
     lr=0.0001,
     betas=(0.0, 0.9),
+    factor=10,
 ):
     """
     Trains a GAN model.
@@ -135,7 +132,13 @@ def train(
                 z = torch.randn(batch_size, 100, 1, 1, device=device)
                 gen_img = G(z).detach()
 
-                loss_D = critic_loss(D, real_img, gen_img, device)
+                loss_D = critic_loss(
+                    D,
+                    real_img,
+                    gen_img,
+                    device=device,
+                    factor=factor,
+                )
                 loss_D.backward()
 
                 # Optionally, clip gradients to prevent explosion
@@ -182,4 +185,11 @@ def train(
 
 
 if __name__ == "__main__":
-    train(Generator(), Critic(), loader)
+    train(
+        Generator(),
+        Critic(),
+        loader,
+        lr=0.0002,
+        betas=(0.5, 0.99),
+        factor=10,
+    )
