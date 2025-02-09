@@ -30,7 +30,7 @@ class Generator(nn.Module):
         # Add upsampling layers
         current_size = 4
         in_features = initial_features
-        for i in range(num_layers - 1):  # Process all but the last layer in the loop
+        for _ in range(num_layers - 1):
             out_features = in_features // 2
             layers.extend(
                 [
@@ -42,7 +42,6 @@ class Generator(nn.Module):
             current_size *= 2
             in_features = out_features
 
-        # Final layer to get to img_channels (last upsampling + conversion to image)
         layers.extend(
             [
                 nn.ConvTranspose2d(in_features, img_channels, 4, 2, 1, bias=False),
@@ -144,7 +143,6 @@ class Critic(nn.Module):
             layers.extend(
                 [
                     nn.Conv2d(in_features, out_features, 4, 2, 1, bias=False),
-                    nn.BatchNorm2d(out_features),
                     nn.LeakyReLU(0.2, inplace=True),
                 ]
             )
