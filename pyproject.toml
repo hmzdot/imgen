@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "gdown>=5.2.0",
     "matplot>=0.1.9",
     "torch>=2.6.0",
     "torchvision>=0.21.0",

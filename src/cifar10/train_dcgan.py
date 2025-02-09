@@ -6,7 +6,7 @@ from tqdm import tqdm
 from datetime import datetime
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from model import Generator, Discriminator
+from ..model import Generator, Discriminator
 
 logging.basicConfig(
     level=logging.INFO,
