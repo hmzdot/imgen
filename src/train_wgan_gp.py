@@ -159,7 +159,7 @@ def train(
             writer.add_scalar("Loss/Generator", loss_G.item(), writer_step)
             writer_step += 1
 
-        if epoch % 10 == 0:  # Log images every 10 epochs
+        if epoch % 5 == 0:  # Log images every 5 epochs
             # Log sample images
             with torch.no_grad():
                 sample_z = torch.randn(8, 100, 1, 1, device=device)
