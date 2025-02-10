@@ -1,6 +1,8 @@
-# Image Generation - Small
+# Image Generation
 
-Image generation using GAN, with a small dataset (CIFAR-10)
+Image generation using GAN, with CIFAR-10 and Celeb-A
+
+![Early sample from Celeb-A training](./gan_sample.png)
 
 ## Implemented Variations
 
@@ -14,8 +16,8 @@ With `uv` installed
 
 ```bash
 # Clone the repo
-git clone git@github.com:hmzdot/imgen-small.git
-cd imgen-small
+git clone git@github.com:hmzdot/imgen.git
+cd imgen
 
 # Install dependencies
 uv sync
@@ -32,5 +34,6 @@ uv run train --help
 # Under the hood it calls `uv run python -m bin.eval`
 # Takes generator network's weights as the input
 uv run eval snapshosts/gw_{timestamp}.pth
+uv run eval snapshosts/gw_{timestamp}.pth --img_size=128 # For Celeb-A
 uv run eval --help
 ```

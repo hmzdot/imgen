@@ -9,16 +9,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Generate an image using GAN")
     parser.add_argument("weights_path", type=str, help="Path to the G weights")
     parser.add_argument(
-        "--model",
-        type=str,
-        help="Model to use for inference",
-        default="dcgan",
-    )
-    parser.add_argument(
         "--image_size",
         type=int,
         help="Image size",
-        default=128,
+        default=32,
     )
     parser.add_argument(
         "--latent_dim",
@@ -49,7 +43,12 @@ def eval(args):
     print(f"Using device: {device}")
 
     device = torch.device(device)
-    generator = Generator(img_size=args.image_size).to(device)
+    generator = Generator(
+        img_size=args.image_size,
+        latent_dim=args.latent_dim,
+        img_channels=3,
+        feature_maps=64,
+    ).to(device)
     generator.load_state_dict(torch.load(args.weights_path, map_location=device))
     generator.eval()
 
