@@ -132,7 +132,7 @@ def train(
 
 
 if __name__ == "__main__":
-    loader = DataLoader(CIFAR_10, batch_size=64, shuffle=True)
+    loader = DataLoader(CIFAR_10(), batch_size=64, shuffle=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     train(
         Generator(img_channels=3, img_size=32),

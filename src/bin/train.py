@@ -69,7 +69,7 @@ def get_device() -> str:
 
 
 def train(args):
-    dataset = CIFAR_10 if args.dataset == "cifar10" else CELEBA
+    dataset = CIFAR_10() if args.dataset == "cifar10" else CELEBA()
     img_size = CIFAR_10_SIZE if args.dataset == "cifar10" else CELEBA_SIZE
     img_channels = CIFAR_10_CHANNELS if args.dataset == "cifar10" else CELEBA_CHANNELS
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
